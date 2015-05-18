@@ -10,11 +10,12 @@
             this.grid = [];
             this.id = parseInt(id);
 			this.pass = 0;
+			this.group = [];
 			this.dir = [{x:-1,y:0},{x:1,y:0},{x:0,y:-1},{x:0,y:1}];
-            for (var j = 0; j < this.size; j++) {
-                this.grid[j] = [];
-                for (var i = 0; i < this.size; i++) {
-                    this.grid[j][i] = 0;
+            for (var i = 0; i < this.size; i++) {
+                this.grid[i] = [];
+                for (var j = 0; j < this.size; j++) {
+                    this.grid[i][j] = 0;
 					var div = document.createElement("div");
                     div.setAttribute('data-coord', i+"_"+j);
                     div.className = 'cell';
@@ -29,38 +30,38 @@
             this.gog.appendChild(this.plate);
         },
         play: function(x, y) {
-            if(this.grid[x][y]==0) {
-				this.checked = [];
-				this.grid[x][y] = this.id;
-				var cell = document.querySelector('.cell[data-coord="'+x+'_'+y+'"]');
-				if (this.id == 1) cell.classList.add('black');
-				else cell.classList.add('white');
+            if(!this.grid[x][y]) {
+				if (this.group.length == 0) this.grid[x][y] = {
+					id:this.id,
+					group: 0
+				}
+				else this.grid[x][y] = {
+					id:this.id,
+					group: this.group.length
+				}
+				this.group.push({x:x,y:y});
 				for (var i = 0; i < this.dir.length; i++) {
 					var around = {
 						x: parseInt(x) + this.dir[i].x,
 						y: parseInt(y) + this.dir[i].y
 					}
-					if (around.x < 19 && around.y < 19 && around.y > -1 && around.x > -1 && (this.grid[around.x][around.y] == (this.id%2) + 1) ) {
-						if (this.grid[around.x][around.y] == (this.id%2) + 1) {
-							this.checked.push(around);
-							if (this.check(around.x, around.y) == 0) this.kill(this.grid, this.checked);
-							else this.uncheck(this.grid, this.checked);
-						}
+					if(this.grid[around.x][around.y].id == this.id) {
+						var newGroup = this.grid[around.x][around.y].group;
+						var exGroup = this.grid[x][y].group;
+						this.group[newGroup] = this.group[newGroup].concat(this.group[exGroup]);
+						this.grid[exGroup] = 0;
+						this.grid[x][y].group = this.grid[around.x][around.y].group;
 					}
 				}
-				this.changeRound();
-				this.pass = 0;
+				
 			}
         },
         check: function(x, y) {
             var lib = 0;
             for (var i = 0; i < this.dir.length; i++) {
-				var around = {
-						x: parseInt(x) + this.dir[i].x,
-						y: parseInt(y) + this.dir[i].y
-				}
-				if (around.x < 19 && around.y < 19 && around.y > -1 && around.x > -1 && (this.grid[around.x][around.y] == 0) ) {
+				if(!this.grid[parseInt(x)+this.dir[i].x][parseInt(y)+this.dir[i].y]) {
 					lib++;
+					console.log('lib++ ' + lib);
 				}
             }
             for (var i = 0; i < this.dir.length; i++) {
@@ -68,10 +69,10 @@
 					x: parseInt(x) + this.dir[i].x,
 					y: parseInt(y) + this.dir[i].y
 				}
-				if (around.x < 19 && around.y < 19 && around.y > -1 && around.x > -1 && (this.grid[around.x][around.y] == (this.id%2) + 1)) {
+				if(this.grid[around.x][around.y] == (this.id%2) + 1) {
 					this.grid[around.x][around.y] += 0.5;
                     this.checked.push(around);
-					lib += this.check(around.x, around.y);
+                    return lib + this.check(around.x, around.y);
                 }
             }
             return lib;
@@ -90,7 +91,7 @@
             }
         },
         changeRound : function() {
-            this.id = (this.id%2) + 1;
+            this.id = parseInt((this.id%2) + 1);
         },
         pass: function() {
             this.changeRound();
