@@ -40,7 +40,7 @@
 						x: parseInt(x) + this.dir[i].x,
 						y: parseInt(y) + this.dir[i].y
 					}
-					if (around.x < 19 && around.y < 19 && around.y > -1 && around.x > -1 && (this.grid[around.x][around.y] == (this.id%2) + 1) ) {
+					if (around.x < this.size && around.y < this.size && around.y > -1 && around.x > -1 && (this.grid[around.x][around.y] == (this.id%2) + 1) ) {
 						if (this.grid[around.x][around.y] == (this.id%2) + 1) {
 							this.checked.push(around);
 							if (this.check(around.x, around.y) == 0) this.kill(this.grid, this.checked);
@@ -59,7 +59,7 @@
 						x: parseInt(x) + this.dir[i].x,
 						y: parseInt(y) + this.dir[i].y
 				}
-				if (around.x < 19 && around.y < 19 && around.y > -1 && around.x > -1 && (this.grid[around.x][around.y] == 0) ) {
+				if (around.x < this.size && around.y < this.size && around.y > -1 && around.x > -1 && (this.grid[around.x][around.y] == 0) ) {
 					lib++;
 				}
             }
@@ -68,7 +68,7 @@
 					x: parseInt(x) + this.dir[i].x,
 					y: parseInt(y) + this.dir[i].y
 				}
-				if (around.x < 19 && around.y < 19 && around.y > -1 && around.x > -1 && (this.grid[around.x][around.y] == (this.id%2) + 1)) {
+				if (around.x < this.size && around.y < this.size && around.y > -1 && around.x > -1 && (this.grid[around.x][around.y] == (this.id%2) + 1)) {
 					this.grid[around.x][around.y] += 0.5;
                     this.checked.push(around);
 					lib += this.check(around.x, around.y);
