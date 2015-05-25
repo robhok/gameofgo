@@ -8,7 +8,7 @@
             this.plate = document.createElement("div");
             this.grid = [];
             this.id = id;
-            for (var j = 0; j < this.size; i++) {
+            for (var j = 0; j < this.size; j++) {
                 this.grid[j] = [];
                 for (var i = 0; i < this.size; i++) {
                     var div = document.createElement("div");
@@ -45,26 +45,19 @@
             return coord;
         },
         check: function(x, y) {
-            var lib = 0;
-            for (var i = -1; i < 2; i+2) {
-                for (var j = -1; j < 2; j+2) {
-                    if(this.grid[x+i][y+j] == 0) lib++;
+            var lib = 0,
+                dir = [{x:x-1,y:y},{x:x+1,y:y},{x:x,y:y-1},{x:x,y:y+1}]
+            for (var i = 0; i < dir.length; i++) {
+                if(this.grid[dir[i].x][dir[i].y] == 0) lib++;
+            }
+            for (var i = 0; i < dir.length; i++) {
+                if(this.grid[dir[i].x][dir[i].y] == (this.id%2) + 1) {
+                    this.grid[dir[i].x][dir[i].y] += 0.5;
+                    this.checked.push(dir[i]);
+                    return lib + this.check(dir[i].x, dir[i].y);
                 }
             }
-            for (var i = -1; i < 2; i+2) {
-                for (var j = -1; j < 2; j+2) {
-                    if(this.grid[x+i][y+j] == (this.id%2) + 1) {
-                        this.grid[x+i][y+j] += 0.5;
-                        var coord = {
-                            x: x+i,
-                            y: y+i
-                        }
-                        this.checked.push(coord);
-                        return lib + this.check(x+i, y+j);
-                    }
-                    return lib;
-                }
-            }
+            return lib;
         },
         unckeck: function (grid, array) {
             for (var i = 0; i < array.length; i++) {
