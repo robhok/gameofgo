@@ -13,7 +13,7 @@
                 for (var i = 0; i < this.size; i++) {
                     var div = document.createElement("div");
                     div.setAttribute('data-coord', i+"_"+j);
-                    div.className('cell');
+                    div.className = 'cell';
                     div.addEventListener('click', function(e) {
                         e.preventDefault;
                         var coord = this.getCoord();
@@ -91,5 +91,5 @@
     }
 //}) ();
     
-    var GoG = new GoG();
-    GoG.init();
+    var gog = new GoG();
+    gog.init();
