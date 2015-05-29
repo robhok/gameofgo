@@ -56,22 +56,16 @@
             var lib = 0;
             for (var i = 0; i < this.dir.length; i++) {
 				var around = {
-						x: parseInt(x) + this.dir[i].x,
-						y: parseInt(y) + this.dir[i].y
-				}
-				if (around.x < this.size && around.y < this.size && around.y > -1 && around.x > -1 && (this.grid[around.x][around.y] == 0) ) {
-					lib++;
-				}
-            }
-            for (var i = 0; i < this.dir.length; i++) {
-				var around = {
 					x: parseInt(x) + this.dir[i].x,
 					y: parseInt(y) + this.dir[i].y
 				}
-				if (around.x < this.size && around.y < this.size && around.y > -1 && around.x > -1 && (this.grid[around.x][around.y] == (this.id%2) + 1)) {
-					this.grid[around.x][around.y] += 0.5;
-                    this.checked.push(around);
-					lib += this.check(around.x, around.y);
+				if (around.x < this.size && around.y < this.size && around.y > -1 && around.x > -1 ) { 	
+					if (this.grid[around.x][around.y] == (this.id%2) + 1) {
+						this.grid[around.x][around.y] += 0.5;
+						this.checked.push(around);
+						lib += this.check(around.x, around.y);
+					}
+					else if (this.grid[around.x][around.y] == 0) lib++;
                 }
             }
             return lib;
