@@ -22,7 +22,7 @@
                     div.addEventListener('click', function(e) {
                         e.preventDefault;
                         var coord = this.getAttribute('data-coord').split("_");
-                        self.play(coord[0], coord[1]);
+                        self.play(parseInt(coord[0]), parseInt(coord[1]));
                     }, false);
                     this.plate.appendChild(div);
             	}
@@ -30,22 +30,18 @@
             this.gog.appendChild(this.plate);
         },
         play: function(x, y) {
-            if(!this.grid[x][y]) {
-				if (this.group.length == 0) this.grid[x][y] = {
-					id:this.id,
-					group: 0
-				}
-				else this.grid[x][y] = {
+            if(this.grid[x][y] == 0 && this.grid[x][y] !== undefined) {
+                this.grid[x][y] = {
 					id:this.id,
 					group: this.group.length
 				}
 				this.group.push({x:x,y:y});
 				for (var i = 0; i < this.dir.length; i++) {
 					var around = {
-						x: parseInt(x) + this.dir[i].x,
-						y: parseInt(y) + this.dir[i].y
+						x: x + this.dir[i].x,
+						y: y + this.dir[i].y
 					}
-					if(this.grid[around.x][around.y].id == this.id) {
+					if(this.grid[around.x][around.y] !== undefined && this.grid[around.x][around.y].id === this.id) {
 						var newGroup = this.grid[around.x][around.y].group;
 						var exGroup = this.grid[x][y].group;
 						this.group[newGroup] = this.group[newGroup].concat(this.group[exGroup]);
@@ -56,23 +52,18 @@
 				
 			}
         },
-        check: function(x, y) {
+        check: function(x, y, id) {
             var lib = 0;
             for (var i = 0; i < this.dir.length; i++) {
-				if(!this.grid[parseInt(x)+this.dir[i].x][parseInt(y)+this.dir[i].y]) {
-					lib++;
-					console.log('lib++ ' + lib);
-				}
-            }
-            for (var i = 0; i < this.dir.length; i++) {
 				var around = {
-					x: parseInt(x) + this.dir[i].x,
-					y: parseInt(y) + this.dir[i].y
+					x: x + this.dir[i].x,
+					y: y + this.dir[i].y
 				}
-				if(this.grid[around.x][around.y] == (this.id%2) + 1) {
-					this.grid[around.x][around.y] += 0.5;
-                    this.checked.push(around);
-                    return lib + this.check(around.x, around.y);
+				if(this.grid[around.x][around.y] !== undefined && this.grid[around.x][around.y] === id) {
+                    if (id === 0) {
+                        if (this.check(around.x, around.y, this.id) === 1) lib++;
+                    }
+                    else lib++;
                 }
             }
             return lib;
