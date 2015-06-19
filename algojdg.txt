@@ -1,0 +1,45 @@
+vide (liberté) --> coord1, coord2..
+allié (((this.id%2)+1) --> coord1, coord2..
+ennemi --> coord1, coord2..
+indéfini/!\
+
+
+
+poser le pion (grid[x][y] = this.id;)
+ennGrpAr = tableau
+
+ennemi ==>
+si ennGrpAr.lastIndexOf(ennemi[i].group) == -1 (grp pas encore modifié) ennGrpAr.push(ennemi[i].group) + enlever les libertés au group ennemi[i].group
+si libertés du group ennemi[i].group == 0 on remplace les cases du groupe par 0 et on vide le tableau de ennemi[i] group
+sinon si libertés == 1 vérifier si cette liberté a des libertés, si c'est le cas ne rien faire
+		  sinon push liberté du group sélectionné dans tab[id]
+			si la longueur du tableau est de 2, vérifier si dans tab toutes les libertés sont à 1
+				si c'est le cas ne rien faire
+				sinon on met unplay[id qui a 1 seule liberté partout]
+			si elle est de 1, vérifier si dans tab[id] toutes les libertés sont à 1
+				si c'est le cas, mettre unplay[id]
+
+allié ==>
+si grid[x][y] == this.id, grid[x][y] = {id:this.id,group:allié.group} + push {x:x, y:y} grp[allié.group];
+sinon fusionner grp (rajouter toutes les coordonnées de grid[x][y].group dans grp[allié.group])
+
+vide ==>
+liberté suicide ? vérifier si cette liberté a des libertés, si c'est le cas ne rien faire
+		  sinon push liberté du group sélectionné dans tab[id]
+			si la longueur du tableau est de 2, vérifier si dans tab toutes les libertés sont à 1
+				si c'est le cas ne rien faire
+				sinon on met unplay[id qui a 1 seule liberté partout]
+			si elle est de 1, vérifier si dans tab[id] toutes les libertés sont à 1
+				si c'est le cas, mettre unplay[id]
+
+				--------------------
+
+libertés ? reparcourir toutes les cases de group[grid[x][y].group] et compter leur liberté en modifiant la case par 0.5
+remettre les cases à 0
+liberté suicide ? si liberté == 1 vérifier si cette liberté a des libertés, si c'est le cas ne rien faire
+		  sinon push liberté du group sélectionné dans tab[id]
+			si la longueur du tableau est de 2, vérifier si dans tab toutes les libertés sont à 1
+				si c'est le cas ne rien faire
+				sinon on met unplay[id qui a 1 seule liberté partout]
+			si elle est de 1, vérifier si dans tab[id] toutes les libertés sont à 1
+				si c'est le cas, mettre unplay[id]
