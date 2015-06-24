@@ -1,16 +1,17 @@
 //(function () {
     function GoG() {};
     GoG.prototype = {
-        init: function(id) {
+        init: function(id, handicap) {
             var self = this;
             this.gog = document.getElementById("gog");
             this.size = 19;
             this.plate = document.createElement("div");
 			this.plate.className = 'play';
             this.grid = [];
+            this.handicap = parseInt(handicap) - 1;
             this.id = parseInt(id);
             this.enemy = (this.id%2)+1;
-			this.pass = 0;
+			this.roundPassed = 0;
 			this.group = [];
             this.unplay = [];
             this.lib = [];
@@ -31,24 +32,76 @@
                     this.plate.appendChild(div);
             	}
             }
+            for (var i = 0; i < 2; i++) {
+                this.unplay[i] = [];
+            }
             this.gog.appendChild(this.plate);
         },
         play: function(x, y) {
             var cellPlay = document.querySelector('.cell[data-coord="'+x+'_'+y+'"]');
             if(this.grid[x][y] == 0 && this.grid[x][y] !== undefined && !cellPlay.classList.contains("unplay"+this.id)) {
+                this.roundPassed = 0;
                 this.checked = [];
-                var enGrpAround = [];
                 this.grid[x][y] = this.id;
+                var enGrpAround = [];
                 var chAround = this.check(x, y, 0);
-                for (var i = 0; i < chAround[2].length; i++) {
+                for (var i = 0; i < chAround[2].length; i++) { //ennemis
                     var cellGrp = this.grid[chAround[2][i].x][chAround[2][i].y].group;
                     if (enGrpAround.lastIndexOf(cellGrp) == -1) enGrpAround.push(cellGrp);
                 }
                 for (var i = 0; i < enGrpAround.length; i++) {
                     this.group[enGrpAround[i]][0]--;
-                    if (this.group[enGrpAround[i]][0].length == 0) this.kill(this.grid, this.group[enGrpAround[i]]);
-                    else if (this.group[enGrpAround[i]][0].length == 1) var lib = this.check(
+                    if (this.group[enGrpAround[i]][0] === 0) {
+                        this.kill(this.grid, this.group[enGrpAround[i]]);
+                    }
+                    else if (this.group[enGrpAround[i]][0] === 1) {
+                        var lib = [];
+                        for (var j = 1; j < this.group[enGrpAround[i]].length; j++) {
+                            lib = this.check(this.group[enGrpAround[i]].x, this.group[enGrpAround[i]].y, 2);
+                        }
+                        if (lib.length == 1) this.libSuicide(lib[0].x, lib[0].y, 0);
+                    }
+                } //fin ennemis
+                for (var i = 0; i < chAround[1].length; i++) { //alliés
+                    var alGrpAround = this.grid[chAround[1][i].x][chAround[1][i].y].group;
+                    if (this.grid[x][y] === this.id) {
+                        this.grid[x][y] = {
+                            id: this.id,
+                            group: alGrpAround
+                        }
+                        this.group[alGrpAround].push({x:x, y:y});
+                    }
+                    else if (this.grid[x][y].group !== alGrpAround) {
+                        for (var j = 1; j < this.group[alGrpAround].length; j++) {
+                            this.grid[this.group[alGrpAround][j].x][this.group[alGrpAround][j].y].group = this.grid[x][y].group;
+                        }
+                        this.group[alGrpAround].shift();
+                        this.group[this.grid[x][y].group] = this.group[this.grid[x][y].group].concat(this.group[alGrpAround]);
+                        this.group[alGrpAround] = [];
+                    }
+                } //fin alliés
+                if (this.grid[x][y] === this.id) {
+                    this.grid[x][y] = {
+                        id:this.id,
+                        group: this.group.length
+                    }
+                    this.group.push([0, {x:x,y:y}]);
                 }
+                var libGrp = this.check(x, y, 3);
+                this.uncheck(this.grid, this.checked);
+                if (libGrp.length == 1) this.libSuicide(libGrp[0].x, libGrp[0].y, 0);
+                this.group[this.grid[x][y].group][0] = libGrp.length;
+                for (var i = 0; i < chAround[0].length; i++) { //libertés
+                    this.libSuicide(chAround[0][i].x, chAround[0][i].y, 0);
+                } //fin libertés
+                var lastPlay = document.getElementsByClassName('lastPlay');
+                if (lastPlay.length > 0) lastPlay[0].classList.remove('lastPlay');
+                var cell = document.querySelector('.cell[data-coord="'+x+'_'+y+'"]');
+				if (this.id == 1) cell.classList.add('black');
+                else cell.classList.add('white');
+                cell.classList.add('lastPlay');
+                if (this.handicap < 1) this.changeRound();
+                else this.handicap--;
 			}
         },
         check: function(x, y, type) { //type : 0 = id, 1 = grp
@@ -74,9 +127,31 @@
                         case 1: //on push les coord de toutes les libertés et le nombre de libertés des groupes alliés / ennemis
                             if (this.grid[around.x][around.y] === 0) lib[0].push(around);
                             else lib[this.grid[around.x][around.y].id].push(this.group[this.grid[around.x][around.y].group][0]);
-                        case 2:
+                            break;
+                        case 2: 
                             if (this.grid[around.x][around.y] === 0) lib.push(around);
-                            else if(this.grid[around.x][around.y].id === this.id) lib.concat(this.check(around.x, around.y, 2));
+                            else if(this.grid[around.x][around.y].id === this.id) lib = lib.concat(this.check(around.x, around.y, 2));
+                            else return;
+                            break;
+                        case 3:
+                            if (this.grid[around.x][around.y] === 0) {
+                                this.checked.push(around);
+                                this.grid[around.x][around.y] += 0.5;
+                                lib.push(around);
+                            }
+                            else if(this.grid[around.x][around.y].id === this.id) {
+                                this.checked.push(around);
+                                this.grid[around.x][around.y].id += 0.5;
+                                lib = lib.concat(this.check(around.x, around.y, 3));
+                            }
+                            break;
+                        case 4:
+                            if (isNaN(this.grid[around.x][around.y])) {
+                                if (this.grid[around.x][around.y].id !== this.grid[x][y].id && lib.lastIndexOf(this.grid[around.x][around.y].group) == -1) {
+                                    lib.push(this.grid[around.x][around.y].group);
+                                }
+                            }
+                            break;
                         default:
                             break;
                     }
@@ -91,76 +166,116 @@
             }
         },
         kill: function (grid, array) {
-            while (array.length > 0) {
+            if (array.length == 2) this.setUnplay(array[1].x, array[1].y, grid[array[1].x][array[1].y].id, 0, 2, 0);
+            while (array.length > 1) {
                 array.shift();
+                var enGrpAround = this.check(array[0].x, array[0].y, 4);
+                for (var i = 0; i < enGrpAround.length; i++) this.group[enGrpAround[i]][0]++;
                 grid[array[0].x][array[0].y] = 0;
-                var cell = document.querySelector('.cell[data-coord="'+array[i].x+'_'+array[i].y+'"]');
+                var cell = document.querySelector('.cell[data-coord="'+array[0].x+'_'+array[0].y+'"]');
                 if (cell.classList.contains('white')) cell.classList.remove('white');
                 else if (cell.classList.contains('black')) cell.classList.remove('black');
             }
+            array.shift();
         },
-        libSuicide: function (x, y) {
+        libSuicide: function (x, y, type) { //0 to check & apply, 1 to check
             var lib = this.check(x, y, 1);
             var idNoLib = [];
-            if (lib[0].length == 0) {
-                for (var i = 1; i < lib.length; i++) {
-                    for (var j = 0; j < lib[i].length; j++) {
-                        if (lib[i][j] == 1) idNoLib.push(i); //i = id de la case (donc du joueur qui possède la case)
+            switch(type) {
+                case 0:
+                    if (lib[0].length == 0) {
+                        for (var i = 1; i < lib.length; i++) {
+                            for (var j = 0; j < lib[i].length; j++) {
+                                if (lib[i][j] == 1) idNoLib.push(i); //i = id de la case (donc du joueur qui possède la case)
+                            }
+                        }
+                        if (idNoLib.lastIndexOf(this.id) !== -1 && idNoLib.lastIndexOf(this.enemy) !== -1) return;
+                        else if (idNoLib.lastIndexOf(this.id) == -1 && idNoLib.lastIndexOf(this.enemy) == -1) {
+                            if (lib[this.id].length == 0 && lib[this.enemy].length > 0) this.setUnplay(x, y, this.id, 0, 1, 0);
+                            else if (lib[this.id].length > 0 && lib[this.enemy].length == 0) this.setUnplay(x, y, this.enemy, 0, 1, 0);
+                        }
+                        else {
+                            if (lib[idNoLib[0]].length == 1) this.setUnplay(x, y, idNoLib[0], 0, 1, 0);
+                        }
                     }
-                }
-                if ((idNoLib.lastIndexOf(this.id) == -1 && idNoLib.lastIndexOf(this.enemy) == -1) || (idNoLib.lastIndexOf(this.id) > 0 && idNoLib.lastIndexOf(this.enemy) > 0)) return;
-                else this.setUnplay(x, y, idNoLib[0], 0, 1, 0);
+                    break;
+                case 1:
+                    if (lib[0].length == 0) {
+                        for (var i = 1; i < lib.length; i++) {
+                            for (var j = 0; j < lib[i].length; j++) {
+                                if (lib[i][j] == 1) idNoLib.push(i); //i = id de la case (donc du joueur qui possède la case)
+                            }
+                        }
+                        if (idNoLib.lastIndexOf(this.id) !== -1 && idNoLib.lastIndexOf(this.enemy) !== -1) return 0;
+                        else if (idNoLib.lastIndexOf(this.id) == -1 && idNoLib.lastIndexOf(this.enemy) == -1) {
+                            if (lib[this.id].length == 0 && lib[this.enemy].length > 0) return this.id;
+                            else if (lib[this.id].length > 0 && lib[this.enemy].length == 0) return this.enemy;
+                        }
+                        else {
+                            if (lib[idNoLib[0]].length == 1) return idNoLib[0];
+                        }
+                    }
+                    else return 0;
+                    break;
+                default:
+                    break;
             }
         },
-        setUnplay: function(x, y, id, addorrem, last, index) { //add or remove = 0 for add, 1 for remove
-            var cell = document.querySelector('.cell[data-coord="'+this.checked[0].x+'_'+this.checked[0].y+'"]');
+        setUnplay: function(x, y, id, addorrem, last, index) { //add or remove : 0 = add, 1 = remove
+            var cell = document.querySelector('.cell[data-coord="'+x+'_'+y+'"]');
+            var unplayExist = 0;
             if (addorrem == 0) {
-                cell.classList.add('unplay'+id);
-                this.unplay.push({id:id,x:x,y:y,last:last});
+                for (var i = 0; i < this.unplay[id-1].length; i++) {
+                    if (this.unplay[id-1][i].x == x && this.unplay[id-1][i].y == y) unplayExist++;
+                }
+                if (unplayExist == 0) {
+                    cell.classList.add('unplay'+id);
+                    this.unplay[id-1].push({x:x,y:y,last:last});
+                }
             }
             if (addorrem == 1) {
                 if (cell.classList.contains('unplay'+id)) cell.classList.remove('unplay'+id);
-                this.unplay.splice(index, 1);
+                this.unplay[id-1].splice(index, 1);
             }
         },
-        changeRound : function() {
+        changeUnplay: function (allyId, enemyId) {
+            for (var i = 0; i < this.unplay[enemyId-1].length; i++) {
+                var cell = document.querySelector('.cell[data-coord="'+this.unplay[enemyId-1][i].x+'_'+this.unplay[enemyId-1][i].y+'"]');
+                cell.classList.remove('unplay'+enemyId);
+            }
+            for (var i = 0; i < this.unplay[allyId-1].length; i++) {
+                var cell = document.querySelector('.cell[data-coord="'+this.unplay[allyId-1][i].x+'_'+this.unplay[allyId-1][i].y+'"]');
+                cell.classList.add('unplay'+allyId);
+            }
+        },
+        changeRound: function() {
             this.enemy = this.id;
             this.id = (this.id%2)+1;
-            for (var i = 0; i < this.unplay.length; i++) {
-                if (this.unplay[i].id == this.id) {
-                    console.log("toto");
-                    this.unplay[i].last--;
-                    if (this.unplay[i].last == 0) {
-                        console.log("tata");
-                        if (this.grid[this.unplay[i].x][this.unplay[i].y] == 0) {
-                            console.log("titi");
-                            if (isNaN(this.check(this.unplay[i].x, this.unplay[i].y, this.id, 0, 1))) {
-                                console.log("tutu");
-                                console.log(this.check(this.unplay[i].x, this.unplay[i].y, this.id, 0, 1));
-                                var cell = document.querySelector('.cell[data-coord="'+this.unplay[i].x+'_'+this.unplay[i].y+'"]');
-                                if (cell.classList.contains('unplay'+this.id)) cell.classList.remove('unplay'+this.id);
-                                this.unplay.splice(i, 1);
-                            }
-                            else {this.unplay[i].last++;
-                            console.log("zut");}
-                        }
-                        else {
-                            var cell = document.querySelector('.cell[data-coord="'+this.unplay[i].x+'_'+this.unplay[i].y+'"]');
-                            if (cell.classList.contains('unplay'+this.id)) cell.classList.remove('unplay'+this.id);
-                            this.unplay.splice(i, 1);
-                        }
+            this.changeUnplay(this.id, this.enemy);
+            for (var i = 0; i < this.unplay[this.id-1].length; i++) {
+                this.unplay[this.id-1][i].last--;
+                if (this.unplay[this.id-1][i].last == 0) {
+                    var idSui = this.libSuicide(this.unplay[this.id-1][i].x, this.unplay[this.id-1][i].y, 1);
+                    if (idSui == this.id) this.unplay[this.id-1][i].last++;
+                    else if (idSui == this.enemy) {
+                        this.setUnplay(this.unplay[this.id-1][i].x, this.unplay[this.id-1][i].y, this.id, 1, 0, i);
+                        this.setUnplay(this.unplay[this.id-1][i].x, this.unplay[this.id-1][i].y, this.enemy, 0, 1, 0);
                     }
+                    else this.setUnplay(this.unplay[this.id-1][i].x, this.unplay[this.id-1][i].y, this.id, 1, 0, i);
                 }
             }
         },
         pass: function() {
-            this.changeRound();
+            this.roundPassed++;
+            if (this.roundPassed == 2) this.end();
+            else this.changeRound();
         },
         end: function() {
+//            for (var i = 0; i
             return;
         }
     }
 //}) ();
     
     var gog = new GoG();
-    gog.init(1);
+    gog.init(1, 1);

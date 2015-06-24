@@ -10,7 +10,7 @@ ennGrpAr = tableau
 
 ennemi ==>
 si ennGrpAr.lastIndexOf(ennemi[i].group) == -1 (grp pas encore modifié) ennGrpAr.push(ennemi[i].group) + enlever les libertés au group ennemi[i].group
-si libertés du group ennemi[i].group == 0 on remplace les cases du groupe par 0 et on vide le tableau de ennemi[i] group
+si libertés du group ennemi[i].group == 0 on remplace les cases du groupe par 0 et on vide le tableau de ennemi[i] group, + on rajoute des libertés dans les grp autour
 sinon si libertés == 1 vérifier si cette liberté a des libertés, si c'est le cas ne rien faire
 		  sinon push liberté du group sélectionné dans tab[id]
 			si la longueur du tableau est de 2, vérifier si dans tab toutes les libertés sont à 1
@@ -43,3 +43,10 @@ liberté suicide ? si liberté == 1 vérifier si cette liberté a des libertés, si c
 				sinon on met unplay[id qui a 1 seule liberté partout]
 			si elle est de 1, vérifier si dans tab[id] toutes les libertés sont à 1
 				si c'est le cas, mettre unplay[id]
+
+
+les deux plusieurs fois = on fait rien
+un une fois l'autre deux fois = on fait rien
+les deux une fois = on fait rien
+un une fois l'autre 0 fois = on vérifie si il y a un autre groupe autour avec le même id (qui a donc plus de 1 liberté) et si oui on fait rien, sinon on met unplay + id
+les deux aucune fois = on vérifie si y a une seule id autour, si oui on met l'autre id en unplay
