@@ -124,8 +124,8 @@ body {
 
 @media (max-width: 1500px) {
 	.play {
-		width: 598.5px;
-		height: 475px;
+		width: 641.25px;
+		height: 513px;
 		-webkit-transform: rotateX(29deg);
 		-moz-transform: rotateX(29deg);
 		-o-transform: rotateX(29deg);
@@ -136,8 +136,8 @@ body {
 		box-sizing: border-box;
 }
 	.cell {
-		width: 31.5px;
-		height: 25px;
+		width: 33.75px;
+		height: 27px;
 		float:left;
 		box-sizing: border-box;
 		background: url('../images/cell.png');
@@ -180,8 +180,8 @@ body {
 		cursor:not-allowed;
 		display:block;
 		margin:10%;
-		width:60%;
-		height:60%;
+		width:72%;
+		height:72%;
 		border-radius:50%;
 		transition:all 200ms;
 		transform-origin:50%;
@@ -192,8 +192,8 @@ body {
 		cursor:not-allowed;
 		display:block;
 		margin:10%;
-		width:60%;
-		height:60%;
+		width:72%;
+		height:72%;
 		border-radius:50%;
 		transition:all 200ms;
 		transform-origin:50%;
@@ -202,9 +202,9 @@ body {
 	#plateAround {
 		-webkit-transform:perspective(600) rotateX(-45deg);
 		background-color:rgba(29,26,21,1);
-		margin:52px auto 0;
-		width:803px;
-		height:16px;
+		margin:54.8px auto 0;
+		width:855px;
+		height:27px;
 		box-shadow: 0 10px 30px #000;
 	}
 }
