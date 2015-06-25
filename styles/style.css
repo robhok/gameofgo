@@ -202,8 +202,8 @@ body {
 	#plateAround {
 		-webkit-transform:perspective(600) rotateX(-45deg);
 		background-color:rgba(29,26,21,1);
-		margin:54.8px auto 0;
-		width:850px;
+		margin:55px auto 0;
+		width:855px;
 		height:27px;
 		box-shadow: 0 10px 30px #000;
 	}
