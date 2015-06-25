@@ -50,6 +50,7 @@
             if(this.grid[x][y] == 0 && this.grid[x][y] !== undefined && !cellPlay.classList.contains("unplay"+this.id)) {
                 this.roundPassed = 0;
                 this.checked = [];
+				this.lib = [];
                 this.grid[x][y] = this.id;
                 var enGrpAround = [];
                 var chAround = this.check(x, y, 0);
@@ -63,13 +64,10 @@
                         this.kill(this.grid, this.group[enGrpAround[i]]);
                     }
                     else if (this.group[enGrpAround[i]][0] === 1) {
-                        var lib = [];
                         for (var j = 1; j < this.group[enGrpAround[i]].length; j++) {
-                            lib = lib.concat(this.check(this.group[enGrpAround[i]][j].x, this.group[enGrpAround[i]][j].y, 2));
+                            this.lib = this.lib.concat(this.check(this.group[enGrpAround[i]][j].x, this.group[enGrpAround[i]][j].y, 2));
                         }
-                        console.log(lib);
-                        if (lib.length == 1) this.libSuicide(lib[0].x, lib[0].y, 0);
-                        this.uncheck(this.grid, lib);
+                        this.uncheck(this.grid, this.lib);
                     }
                 } //fin ennemis
                 for (var i = 0; i < chAround[1].length; i++) { //alliés
@@ -104,6 +102,7 @@
                 for (var i = 0; i < chAround[0].length; i++) { //libertés
                     this.libSuicide(chAround[0][i].x, chAround[0][i].y, 0);
                 } //fin libertés
+				if (this.lib.length == 1) this.libSuicide(this.lib[0].x, this.lib[0].y, 0);
                 var lastPlay = document.getElementsByClassName('lastPlay');
                 if (lastPlay.length > 0) lastPlay[0].classList.remove('lastPlay');
                 var cell = document.querySelector('.cell[data-coord="'+x+'_'+y+'"]');
@@ -136,8 +135,13 @@
                             else if (this.grid[around.x][around.y].id === this.enemy) lib[2].push(around);
                             break;
                         case 1: //on push les coord de toutes les libertés et le nombre de libertés des groupes alliés / ennemis
-                            if (this.grid[around.x][around.y] === 0) lib[0].push(around);
-                            else lib[this.grid[around.x][around.y].id].push(this.group[this.grid[around.x][around.y].group][0]);
+							if (this.grid[around.x][around.y] === 0) lib[0].push(around);
+                            else {
+								console.log(this.grid[around.x][around.y].id);
+								console.log(around);
+								console.log(lib);
+								lib[this.grid[around.x][around.y].id].push(this.group[this.grid[around.x][around.y].group][0]);
+							}
                             break;
                         case 2: 
                             if (this.grid[around.x][around.y] === 0) { 
