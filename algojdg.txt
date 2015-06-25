@@ -50,3 +50,5 @@ un une fois l'autre deux fois = on fait rien
 les deux une fois = on fait rien
 un une fois l'autre 0 fois = on vérifie si il y a un autre groupe autour avec le même id (qui a donc plus de 1 liberté) et si oui on fait rien, sinon on met unplay + id
 les deux aucune fois = on vérifie si y a une seule id autour, si oui on met l'autre id en unplay
+
+fin de partie:

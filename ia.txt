@@ -1,0 +1,17 @@
+beginner : 
+placement aléatoire 
+mange si 1 liberté
+
+
+easy : 
+pose les pions à côté des pions ennemi
+mange si 1 liberté
+s'échappe si plus que une liberté
+
+
+medium : 
+commence en prenant du territoire
+regarde si un de ses groupes à 1 liberté
+	si cette liberté a au moins une liberté il s'échappe
+	sinon il attaque
+mange si 1 ou 2 libertés
