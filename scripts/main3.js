@@ -15,6 +15,7 @@
 			this.group = [];
             this.unplay = [];
             this.lib = [];
+			this.libGrp = [];
 			this.dir = [{x:-1,y:0},{x:1,y:0},{x:0,y:-1},{x:0,y:1}];
             this.dirDiag = [{x:-1,y:1},{x:1,y:1},{x:-1,y:-1},{x:1,y:-1}];
             for (var i = 0; i < this.size; i++) {
@@ -43,6 +44,7 @@
             this.gog.appendChild(this.plate);
             for (var i = 0; i < 2; i++) {
                 this.unplay[i] = [];
+				this.libGrp[i] = [];
             }
         },
         play: function(x, y) {
@@ -292,9 +294,15 @@
             else this.changeRound();
         },
         end: function() {
-//            for (var i = 0; i
-            return;
-        }
+            for (var i = 0; i < this.size; i++) {
+				for (var j = 0; j < this.size; j++) {
+					 if (this.grid[i][j] == 0) this.grpLiberty(i, j);
+				}
+			}
+        },
+		grpLiberty: function(x, y) {
+			
+		}
     }
 //}) ();
     
