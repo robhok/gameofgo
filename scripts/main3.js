@@ -4,8 +4,8 @@
         init: function(id, handicap) {
             var self = this;
             this.gog = document.getElementById("gog");
-            this.size = 19;
             this.plate = document.createElement("div");
+            this.size = 19;
 			this.plate.className = 'play';
             this.grid = [];
             this.handicap = parseInt(handicap) - 1;
@@ -24,6 +24,14 @@
 					var div = document.createElement("div");
                     div.setAttribute('data-coord', i+"_"+j);
                     div.className = 'cell';
+                    if (i == 0 && j == 0) div.className += ' coinHG';
+                    else if (i == 0 && j == this.size-1) div.className += ' coinHD';
+                    else if (i == this.size-1 && j == 0) div.className += ' coinBG';
+                    else if (i == this.size-1 && j == this.size-1) div.className += ' coinBD';
+                    else if (i == 0) div.className += ' bordH';
+                    else if (j == 0) div.className += ' bordG';
+                    else if (i == this.size-1) div.className += ' bordB';
+                    else if (j == this.size-1) div.className += ' bordD';
                     div.addEventListener('click', function(e) {
                         e.preventDefault;
                         var coord = this.getAttribute('data-coord').split("_");
@@ -32,10 +40,10 @@
                     this.plate.appendChild(div);
             	}
             }
+            this.gog.appendChild(this.plate);
             for (var i = 0; i < 2; i++) {
                 this.unplay[i] = [];
             }
-            this.gog.appendChild(this.plate);
         },
         play: function(x, y) {
             var cellPlay = document.querySelector('.cell[data-coord="'+x+'_'+y+'"]');
@@ -57,9 +65,11 @@
                     else if (this.group[enGrpAround[i]][0] === 1) {
                         var lib = [];
                         for (var j = 1; j < this.group[enGrpAround[i]].length; j++) {
-                            lib = this.check(this.group[enGrpAround[i]].x, this.group[enGrpAround[i]].y, 2);
+                            lib = lib.concat(this.check(this.group[enGrpAround[i]][j].x, this.group[enGrpAround[i]][j].y, 2));
                         }
+                        console.log(lib);
                         if (lib.length == 1) this.libSuicide(lib[0].x, lib[0].y, 0);
+                        this.uncheck(this.grid, lib);
                     }
                 } //fin ennemis
                 for (var i = 0; i < chAround[1].length; i++) { //alliés
@@ -97,9 +107,10 @@
                 var lastPlay = document.getElementsByClassName('lastPlay');
                 if (lastPlay.length > 0) lastPlay[0].classList.remove('lastPlay');
                 var cell = document.querySelector('.cell[data-coord="'+x+'_'+y+'"]');
-				if (this.id == 1) cell.classList.add('black');
-                else cell.classList.add('white');
-                cell.classList.add('lastPlay');
+                var span = document.createElement('span');
+				if (this.id == 1) span.className = ('black lastPlay');
+                else span.className = ('white lastPlay');
+                cell.appendChild(span);
                 if (this.handicap < 1) this.changeRound();
                 else this.handicap--;
 			}
@@ -129,9 +140,10 @@
                             else lib[this.grid[around.x][around.y].id].push(this.group[this.grid[around.x][around.y].group][0]);
                             break;
                         case 2: 
-                            if (this.grid[around.x][around.y] === 0) lib.push(around);
-                            else if(this.grid[around.x][around.y].id === this.id) lib = lib.concat(this.check(around.x, around.y, 2));
-                            else return;
+                            if (this.grid[around.x][around.y] === 0) { 
+                                lib.push(around);
+                                this.grid[around.x][around.y] += 0.5;
+                            }
                             break;
                         case 3:
                             if (this.grid[around.x][around.y] === 0) {
@@ -173,46 +185,51 @@
                 for (var i = 0; i < enGrpAround.length; i++) this.group[enGrpAround[i]][0]++;
                 grid[array[0].x][array[0].y] = 0;
                 var cell = document.querySelector('.cell[data-coord="'+array[0].x+'_'+array[0].y+'"]');
-                if (cell.classList.contains('white')) cell.classList.remove('white');
-                else if (cell.classList.contains('black')) cell.classList.remove('black');
+                var span = document.querySelector('.cell[data-coord="'+array[0].x+'_'+array[0].y+'"]').firstChild;
+                cell.removeChild(span);
             }
             array.shift();
         },
         libSuicide: function (x, y, type) { //0 to check & apply, 1 to check
             var lib = this.check(x, y, 1);
             var idNoLib = [];
+            idNoLib[0] = [];
+            idNoLib[1] = [];
             switch(type) {
                 case 0:
                     if (lib[0].length == 0) {
                         for (var i = 1; i < lib.length; i++) {
                             for (var j = 0; j < lib[i].length; j++) {
-                                if (lib[i][j] == 1) idNoLib.push(i); //i = id de la case (donc du joueur qui possède la case)
+                                if (lib[i][j] == 1) idNoLib[0].push(i); //i = id de la case (donc du joueur qui possède la case)
+                                else idNoLib[1].push(i);
                             }
                         }
-                        if (idNoLib.lastIndexOf(this.id) !== -1 && idNoLib.lastIndexOf(this.enemy) !== -1) return;
-                        else if (idNoLib.lastIndexOf(this.id) == -1 && idNoLib.lastIndexOf(this.enemy) == -1) {
+                        if (idNoLib[0].lastIndexOf(this.id) !== -1 && idNoLib[0].lastIndexOf(this.enemy) !== -1) return;
+                        else if (idNoLib[0].lastIndexOf(this.id) == -1 && idNoLib[0].lastIndexOf(this.enemy) == -1) {
                             if (lib[this.id].length == 0 && lib[this.enemy].length > 0) this.setUnplay(x, y, this.id, 0, 1, 0);
                             else if (lib[this.id].length > 0 && lib[this.enemy].length == 0) this.setUnplay(x, y, this.enemy, 0, 1, 0);
                         }
                         else {
-                            if (lib[idNoLib[0]].length == 1) this.setUnplay(x, y, idNoLib[0], 0, 1, 0);
+                            if (idNoLib[1].lastIndexOf(idNoLib[0][0]) == -1) this.setUnplay(x, y, idNoLib[0][0], 0, 1, 0);
                         }
                     }
                     break;
                 case 1:
+                    if (this.grid[x][y] !== 0) return 0;
                     if (lib[0].length == 0) {
                         for (var i = 1; i < lib.length; i++) {
                             for (var j = 0; j < lib[i].length; j++) {
-                                if (lib[i][j] == 1) idNoLib.push(i); //i = id de la case (donc du joueur qui possède la case)
+                                if (lib[i][j] == 1) idNoLib[0].push(i); //i = id de la case (donc du joueur qui possède la case)
+                                else idNoLib[1].push(i);
                             }
                         }
-                        if (idNoLib.lastIndexOf(this.id) !== -1 && idNoLib.lastIndexOf(this.enemy) !== -1) return 0;
-                        else if (idNoLib.lastIndexOf(this.id) == -1 && idNoLib.lastIndexOf(this.enemy) == -1) {
+                        if (idNoLib[0].lastIndexOf(this.id) !== -1 && idNoLib[0].lastIndexOf(this.enemy) !== -1) return 0;
+                        else if (idNoLib[0].lastIndexOf(this.id) == -1 && idNoLib[0].lastIndexOf(this.enemy) == -1) {
                             if (lib[this.id].length == 0 && lib[this.enemy].length > 0) return this.id;
                             else if (lib[this.id].length > 0 && lib[this.enemy].length == 0) return this.enemy;
                         }
                         else {
-                            if (lib[idNoLib[0]].length == 1) return idNoLib[0];
+                            if (idNoLib[1].lastIndexOf(idNoLib[0][0]) == -1) return idNoLib[0][0];
                         }
                     }
                     else return 0;
