@@ -295,3 +295,33 @@ body {
 		box-shadow: 0 10px 30px #000;
 	}
 }*/
+/*NAVBAR -------------*/
+#navbar {
+    position: fixed;
+    bottom: 6vh;
+    left: 0px;
+    right: 0px;
+    
+}
+#navbar ul {
+    margin-top: 0;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+}
+#navbar ul li{
+    margin: 22px;
+    width: 30px;
+    height: 30px;
+    
+}
+#navbar ul li p{
+    margin: 0;
+    font-family: 'GillSans', sans-serif;
+    font-weight: 400;
+    color: white;
+    font-size: 0.8em;
+
+}
