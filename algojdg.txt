@@ -52,3 +52,37 @@ un une fois l'autre 0 fois = on vérifie si il y a un autre groupe autour avec le
 les deux aucune fois = on vérifie si y a une seule id autour, si oui on met l'autre id en unplay
 
 fin de partie:
+
+this.endGrid = this.grid;
+
+on analyse les cases une par une, si c'est un 0 on lance la fonction récursive suivante :
+	met la case à 0
+	il rajoute +0.5
+	il regarde toutes les cases autour de lui et place around dans tab[0] fait tab[id]++
+	var newtab = fonction récursive (tab[0] à tab[tab.length])
+	tab[0].concat(newtab[0]);
+	tab[1] += newtab[1];
+	tab[2] += newtab[2];
+	return tab;
+
+si tab[1] > 0 && tab[2] > 0 
+	var tabSize = this.libGrp[0].length;
+	this.libGrp[0][tabSize] = [];
+	this.libGrp[0][tabSize] = this.libGrp[0][tabSize].concat(tab[0]);
+sinon si tab[1] > 0
+	var tabSize = this.libGrp[1].length;
+	this.libGrp[1][tabSize] = [];
+	this.libGrp[1][tabSize] = this.libGrp[1][tabSize].concat(tab[1]);
+sinon si tab[2] > 0
+	var tabSize = this.libGrp[2].length;
+	this.libGrp[2][tabSize] = [];
+	this.libGrp[2][tabSize] = this.libGrp[2][tabSize].concat(tab[2]);
+
+
+for (var i = 0; i < this.libGrp[1].length; i++)
+	this.libGrp[1][i]
+	this.check(x et y du tab) (qui met toutes les libertés et les pions du paramètre (id) dans un tab)
+	rajoute 10 à l'id ou à la case
+}
+
+pareil pour this.libGrp[2]

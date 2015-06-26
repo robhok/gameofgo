@@ -138,12 +138,7 @@
                             break;
                         case 1: //on push les coord de toutes les libertés et le nombre de libertés des groupes alliés / ennemis
 							if (this.grid[around.x][around.y] === 0) lib[0].push(around);
-                            else {
-								console.log(this.grid[around.x][around.y].id);
-								console.log(around);
-								console.log(lib);
-								lib[this.grid[around.x][around.y].id].push(this.group[this.grid[around.x][around.y].group][0]);
-							}
+                            else lib[this.grid[around.x][around.y].id].push(this.group[this.grid[around.x][around.y].group][0]);
                             break;
                         case 2: 
                             if (this.grid[around.x][around.y] === 0) { 

@@ -1,21 +1,23 @@
 //(function () {
     function GoG() {};
     GoG.prototype = {
-        init: function(id, handicap) {
+        init: function(id, handicap, ia) {
             var self = this;
             this.gog = document.getElementById("gog");
-            this.size = 19;
             this.plate = document.createElement("div");
-			this.plate.className = 'play';
             this.grid = [];
+            this.group = [];
+            this.ia = ia;
+            this.size = 19;
+			this.plate.className = 'play';
             this.handicap = parseInt(handicap) - 1;
             this.id = parseInt(id);
             this.enemy = (this.id%2)+1;
 			this.roundPassed = 0;
-			this.group = [];
             this.unplay = [];
-            this.unplayEx = [];
             this.lib = [];
+			this.libGrp = [];
+            this.turnIa = 0;
 			this.dir = [{x:-1,y:0},{x:1,y:0},{x:0,y:-1},{x:0,y:1}];
             this.dirDiag = [{x:-1,y:1},{x:1,y:1},{x:-1,y:-1},{x:1,y:-1}];
             for (var i = 0; i < this.size; i++) {
@@ -25,6 +27,14 @@
 					var div = document.createElement("div");
                     div.setAttribute('data-coord', i+"_"+j);
                     div.className = 'cell';
+                    if (i == 0 && j == 0) div.className += ' coinHG';
+                    else if (i == 0 && j == this.size-1) div.className += ' coinHD';
+                    else if (i == this.size-1 && j == 0) div.className += ' coinBG';
+                    else if (i == this.size-1 && j == this.size-1) div.className += ' coinBD';
+                    else if (i == 0) div.className += ' bordH';
+                    else if (j == 0) div.className += ' bordG';
+                    else if (i == this.size-1) div.className += ' bordB';
+                    else if (j == this.size-1) div.className += ' bordD';
                     div.addEventListener('click', function(e) {
                         e.preventDefault;
                         var coord = this.getAttribute('data-coord').split("_");
@@ -34,12 +44,17 @@
             	}
             }
             this.gog.appendChild(this.plate);
+            for (var i = 0; i < 2; i++) {
+                this.unplay[i] = [];
+				this.libGrp[i] = [];
+            }
         },
         play: function(x, y) {
             var cellPlay = document.querySelector('.cell[data-coord="'+x+'_'+y+'"]');
             if(this.grid[x][y] == 0 && this.grid[x][y] !== undefined && !cellPlay.classList.contains("unplay"+this.id)) {
                 this.roundPassed = 0;
                 this.checked = [];
+				this.lib = [];
                 this.grid[x][y] = this.id;
                 var enGrpAround = [];
                 var chAround = this.check(x, y, 0);
@@ -53,11 +68,10 @@
                         this.kill(this.grid, this.group[enGrpAround[i]]);
                     }
                     else if (this.group[enGrpAround[i]][0] === 1) {
-                        var lib = [];
                         for (var j = 1; j < this.group[enGrpAround[i]].length; j++) {
-                            lib = this.check(this.group[enGrpAround[i]].x, this.group[enGrpAround[i]].y, 2);
+                            this.lib = this.lib.concat(this.check(this.group[enGrpAround[i]][j].x, this.group[enGrpAround[i]][j].y, 2));
                         }
-                        if (lib.length == 1) this.libSuicide(lib[0].x, lib[0].y, 0);
+                        this.uncheck(this.grid, this.lib);
                     }
                 } //fin ennemis
                 for (var i = 0; i < chAround[1].length; i++) { //alliés
@@ -92,14 +106,21 @@
                 for (var i = 0; i < chAround[0].length; i++) { //libertés
                     this.libSuicide(chAround[0][i].x, chAround[0][i].y, 0);
                 } //fin libertés
+				if (this.lib.length == 1) this.libSuicide(this.lib[0].x, this.lib[0].y, 0);
+                var lastPlay = document.getElementsByClassName('lastPlay');
+                if (lastPlay.length > 0) lastPlay[0].classList.remove('lastPlay');
                 var cell = document.querySelector('.cell[data-coord="'+x+'_'+y+'"]');
-				if (this.id == 1) cell.classList.add('black');
-                else cell.classList.add('white');
+                var span = document.createElement('span');
+				if (this.id == 1) span.className = ('black lastPlay');
+                else span.className = ('white lastPlay');
+                cell.appendChild(span);
                 if (this.handicap < 1) this.changeRound();
                 else this.handicap--;
+                return 1;
 			}
+            else return 0;
         },
-        check: function(x, y, type) { //type : 0 = id, 1 = grp
+        check: function(x, y, type, element) { //type : 0 = id, 1 = grp
             if (type == 0 || type == 1) { 
                 var lib = [];
                 for (var i = 0; i < 3; i++) {
@@ -120,13 +141,14 @@
                             else if (this.grid[around.x][around.y].id === this.enemy) lib[2].push(around);
                             break;
                         case 1: //on push les coord de toutes les libertés et le nombre de libertés des groupes alliés / ennemis
-                            if (this.grid[around.x][around.y] === 0) lib[0].push(around);
+							if (this.grid[around.x][around.y] === 0) lib[0].push(around);
                             else lib[this.grid[around.x][around.y].id].push(this.group[this.grid[around.x][around.y].group][0]);
                             break;
                         case 2: 
-                            if (this.grid[around.x][around.y] === 0) lib.push(around);
-                            else if(this.grid[around.x][around.y].id === this.id) lib = lib.concat(this.check(around.x, around.y, 2));
-                            else return;
+                            if (this.grid[around.x][around.y] === 0) { 
+                                lib.push(around);
+                                this.grid[around.x][around.y] += 0.5;
+                            }
                             break;
                         case 3:
                             if (this.grid[around.x][around.y] === 0) {
@@ -145,6 +167,12 @@
                                 if (this.grid[around.x][around.y].id !== this.grid[x][y].id && lib.lastIndexOf(this.grid[around.x][around.y].group) == -1) {
                                     lib.push(this.grid[around.x][around.y].group);
                                 }
+                            }
+                            break;
+                        case 5:
+                            if (this.grid[around.x][around.y] === element) lib.push(around);
+                            else if (isNaN(this.grid[around.x][around.y])) {
+                                if (this.grid[around.x][around.y].id === element) lib.push(around);
                             }
                             break;
                         default:
@@ -168,46 +196,51 @@
                 for (var i = 0; i < enGrpAround.length; i++) this.group[enGrpAround[i]][0]++;
                 grid[array[0].x][array[0].y] = 0;
                 var cell = document.querySelector('.cell[data-coord="'+array[0].x+'_'+array[0].y+'"]');
-                if (cell.classList.contains('white')) cell.classList.remove('white');
-                else if (cell.classList.contains('black')) cell.classList.remove('black');
+                var span = document.querySelector('.cell[data-coord="'+array[0].x+'_'+array[0].y+'"]').firstChild;
+                cell.removeChild(span);
             }
             array.shift();
         },
         libSuicide: function (x, y, type) { //0 to check & apply, 1 to check
             var lib = this.check(x, y, 1);
             var idNoLib = [];
+            idNoLib[0] = [];
+            idNoLib[1] = [];
             switch(type) {
                 case 0:
                     if (lib[0].length == 0) {
                         for (var i = 1; i < lib.length; i++) {
                             for (var j = 0; j < lib[i].length; j++) {
-                                if (lib[i][j] == 1) idNoLib.push(i); //i = id de la case (donc du joueur qui possède la case)
+                                if (lib[i][j] == 1) idNoLib[0].push(i); //i = id de la case (donc du joueur qui possède la case)
+                                else idNoLib[1].push(i);
                             }
                         }
-                        if (idNoLib.lastIndexOf(this.id) !== -1 && idNoLib.lastIndexOf(this.enemy) !== -1) return;
-                        else if (idNoLib.lastIndexOf(this.id) == -1 && idNoLib.lastIndexOf(this.enemy) == -1) {
+                        if (idNoLib[0].lastIndexOf(this.id) !== -1 && idNoLib[0].lastIndexOf(this.enemy) !== -1) return;
+                        else if (idNoLib[0].lastIndexOf(this.id) == -1 && idNoLib[0].lastIndexOf(this.enemy) == -1) {
                             if (lib[this.id].length == 0 && lib[this.enemy].length > 0) this.setUnplay(x, y, this.id, 0, 1, 0);
                             else if (lib[this.id].length > 0 && lib[this.enemy].length == 0) this.setUnplay(x, y, this.enemy, 0, 1, 0);
                         }
                         else {
-                            if (lib[idNoLib[0]].length == 1) this.setUnplay(x, y, idNoLib[0], 0, 1, 0);
+                            if (idNoLib[1].lastIndexOf(idNoLib[0][0]) == -1) this.setUnplay(x, y, idNoLib[0][0], 0, 1, 0);
                         }
                     }
                     break;
                 case 1:
+                    if (this.grid[x][y] !== 0) return 0;
                     if (lib[0].length == 0) {
                         for (var i = 1; i < lib.length; i++) {
                             for (var j = 0; j < lib[i].length; j++) {
-                                if (lib[i][j] == 1) idNoLib.push(i); //i = id de la case (donc du joueur qui possède la case)
+                                if (lib[i][j] == 1) idNoLib[0].push(i); //i = id de la case (donc du joueur qui possède la case)
+                                else idNoLib[1].push(i);
                             }
                         }
-                        if (idNoLib.lastIndexOf(this.id) !== -1 && idNoLib.lastIndexOf(this.enemy) !== -1) return 0;
-                        else if (idNoLib.lastIndexOf(this.id) == -1 && idNoLib.lastIndexOf(this.enemy) == -1) {
+                        if (idNoLib[0].lastIndexOf(this.id) !== -1 && idNoLib[0].lastIndexOf(this.enemy) !== -1) return 0;
+                        else if (idNoLib[0].lastIndexOf(this.id) == -1 && idNoLib[0].lastIndexOf(this.enemy) == -1) {
                             if (lib[this.id].length == 0 && lib[this.enemy].length > 0) return this.id;
                             else if (lib[this.id].length > 0 && lib[this.enemy].length == 0) return this.enemy;
                         }
                         else {
-                            if (lib[idNoLib[0]].length == 1) return idNoLib[0];
+                            if (idNoLib[1].lastIndexOf(idNoLib[0][0]) == -1) return idNoLib[0][0];
                         }
                     }
                     else return 0;
@@ -220,51 +253,46 @@
             var cell = document.querySelector('.cell[data-coord="'+x+'_'+y+'"]');
             var unplayExist = 0;
             if (addorrem == 0) {
-                for (var i = 0; i < this.unplay.length; i++) {
-                    if (this.unplay[i].x == x && this.unplay[i].y == y) unplayExist++;
+                for (var i = 0; i < this.unplay[id-1].length; i++) {
+                    if (this.unplay[id-1][i].x == x && this.unplay[id-1][i].y == y) unplayExist++;
                 }
                 if (unplayExist == 0) {
                     cell.classList.add('unplay'+id);
-                    this.unplay.push({id:id,x:x,y:y,last:last});
+                    this.unplay[id-1].push({x:x,y:y,last:last});
                 }
             }
             if (addorrem == 1) {
                 if (cell.classList.contains('unplay'+id)) cell.classList.remove('unplay'+id);
-                this.unplay.splice(index, 1);
+                this.unplay[id-1].splice(index, 1);
             }
         },
         changeUnplay: function (allyId, enemyId) {
-            if (this.unplayEx[enemyId-1]) {
-                for (var i = 0; i < this.unplayEx[enemyId-1].length; i++) {
-                    this.unplayEx[enemyId-1][i].classList.remove('unplay'+enemyId);
-                }
+            for (var i = 0; i < this.unplay[enemyId-1].length; i++) {
+                var cell = document.querySelector('.cell[data-coord="'+this.unplay[enemyId-1][i].x+'_'+this.unplay[enemyId-1][i].y+'"]');
+                cell.classList.remove('unplay'+enemyId);
             }
-            if (this.unplayEx[allyId-1]) {
-                for (var i = 0; i < this.unplayEx[allyId-1].length; i++) {
-                    this.unplayEx[allyId-1][i].classList.add('unplay'+allyId);
-                }
+            for (var i = 0; i < this.unplay[allyId-1].length; i++) {
+                var cell = document.querySelector('.cell[data-coord="'+this.unplay[allyId-1][i].x+'_'+this.unplay[allyId-1][i].y+'"]');
+                cell.classList.add('unplay'+allyId);
             }
-            this.unplayEx[allyId-1] = document.getElementsByClassName('unplay'+allyId);
-            console.log(this.unplayEx);
         },
         changeRound: function() {
             this.enemy = this.id;
             this.id = (this.id%2)+1;
             this.changeUnplay(this.id, this.enemy);
-            for (var i = 0; i < this.unplay.length; i++) {
-                if (this.unplay[i].id == this.id) {
-                    this.unplay[i].last--;
-                    if (this.unplay[i].last == 0) {
-                        var idSui = this.libSuicide(this.unplay[i].x, this.unplay[i].y, 1);
-                        if (idSui == this.id) this.unplay[i].last++;
-                        else if (idSui == this.enemy) {
-                            this.setUnplay(this.unplay[i].x, this.unplay[i].y, this.id, 1, 0, i);
-                            this.setUnplay(this.unplay[i].x, this.unplay[i].y, this.enemy, 0, 1, 0);
-                        }
-                        else this.setUnplay(this.unplay[i].x, this.unplay[i].y, this.id, 1, 0, i);
+            for (var i = 0; i < this.unplay[this.id-1].length; i++) {
+                this.unplay[this.id-1][i].last--;
+                if (this.unplay[this.id-1][i].last == 0) {
+                    var idSui = this.libSuicide(this.unplay[this.id-1][i].x, this.unplay[this.id-1][i].y, 1);
+                    if (idSui == this.id) this.unplay[this.id-1][i].last++;
+                    else if (idSui == this.enemy) {
+                        this.setUnplay(this.unplay[this.id-1][i].x, this.unplay[this.id-1][i].y, this.id, 1, 0, i);
+                        this.setUnplay(this.unplay[this.id-1][i].x, this.unplay[this.id-1][i].y, this.enemy, 0, 1, 0);
                     }
+                    else this.setUnplay(this.unplay[this.id-1][i].x, this.unplay[this.id-1][i].y, this.id, 1, 0, i);
                 }
             }
+            if (this.id == 2) this.IAplay(this.ia);
         },
         pass: function() {
             this.roundPassed++;
@@ -272,11 +300,161 @@
             else this.changeRound();
         },
         end: function() {
-//            for (var i = 0; i
-            return;
+            for (var i = 0; i < this.size; i++) {
+				for (var j = 0; j < this.size; j++) {
+					 if (this.grid[i][j] == 0) this.grpLiberty(i, j);
+				}
+			}
+        },
+		grpLiberty: function(x, y) {
+			return;
+		},
+        IAplay: function(mode) {
+            switch (mode) {
+                case 1:
+                    var lib = this.checkIfLib(this.enemy, 1);
+                    var play = 0;
+                    var i = 0;
+                    while (play == 0 && i < lib.length) {
+                        play = this.play(lib[i].x, lib[i].y);
+                        i++;
+                    }
+                    while (play == 0) {
+                        play = this.play(Math.floor(Math.random()*this.size), Math.floor(Math.random()*this.size));
+                    }
+                    break;
+                case 2:
+                    var lib = this.checkIfLib(this.enemy, 1);
+                    var play = 0;
+                    var i = 0;
+                    while (play == 0 && i < lib.length) {
+                        play = this.play(lib[i].x, lib[i].y);
+                        i++;
+                    }
+                    if (play == 0) {
+                        var lessLib = this.checkLessLib(this.enemy);
+                        for (var i = 0; i < lessLib.length; i++) {
+                            if (play == 0) play = this.play(lessLib[i].x, lessLib[i].y);
+                        }
+                    }
+                    while (play == 0) {
+                        play = this.play(Math.floor(Math.random()*this.size), Math.floor(Math.random()*this.size));
+                    }
+                    break;
+                case 3:
+                    var play = 0;
+                    if (this.turnIa == 0) play = this.play(3,3);
+                    else if (this.turnIa == 1) play = this.play(15,15);
+                    else {
+                        var lib = this.checkIfLib(this.id, 1);
+                        for (var i = 0; i < lib.length; i++) {
+                            if (this.check(lib[i].x, lib[i].y, 5, 0).length > 0 || this.check(lib[i].x, lib[i].y, 5, this.id).length > 0) play = this.play(lib[i].x, lib[i].y);
+                        }
+                        if (play == 0) {
+                            var littleLib = this.checkIfLib(this.enemy, 1);
+                            for (var i = 0; i < littleLib.length; i++) {
+                                if (play == 0) play = this.play(littleLib[i].x, littleLib[i].y);
+                            }
+                        }
+                        if (play == 0) {
+                            var lessLib = this.checkLessLib(this.enemy);
+                            for (var i = 0; i < lessLib.length; i++) {
+                                if (play == 0) play = this.play(lessLib[i].x, lessLib[i].y);
+                            }
+                        }
+                    }
+                    this.turnIa++;
+                    break;
+                default:
+                    break;
+            }
+        },
+        checkIfLib: function(id, mode) {
+            var tab = [];
+            for (var i = 0; i < this.group.length; i++) {
+                 if (mode == 1 && this.group[i][0] == 1 && this.grid[this.group[i][1].x][this.group[i][1].y].id == id) {
+                     for (var j = 1; j < this.group[i].length; j++) {
+                         tab = tab.concat(this.check(this.group[i][j].x, this.group[i][j].y, 2));
+                     }
+                 }
+                 if (mode == 2 && this.group[i][0] == 2 && this.grid[this.group[i][1].x][this.group[i][1].y].id == id) {
+                     for (var j = 1; j < this.group[i].length; j++) {
+                         tab = tab.concat(this.check(this.group[i][j].x, this.group[i][j].y, 2));
+                     }
+                 }
+            }
+            for (var i = 0; i < tab.length; i++) {
+                this.grid[tab[i].x][tab[i].y] = 0;
+            }
+            return tab;
+        },
+        checkLessLib: function(id) {
+            var lessLib = {
+                grp: 0,
+                liberty: 50
+            }
+            var exLib = lessLib;
+            var tab = [];
+            var lib = [];
+            for (var i = 0; i < this.group.length; i++) {
+                if (this.group[i].length > 1) {
+                    if (this.group[i][0] < lessLib.liberty && this.grid[this.group[i][1].x][this.group[i][1].y].id == id) {
+                        exLib = lessLib;
+                        lessLib = {
+                            grp: i,
+                            liberty: this.group[i][0]
+                        }
+                    }
+                    if (lessLib.grp == i) {
+                        for (var j = 1; j < this.group[i].length; j++) {
+                            lib = lib.concat(this.check(this.group[i][j].x, this.group[i][j].y, 2));
+                        }
+                        for (var j = 0; j < lib.length; j++) {
+                            var cell = document.querySelector('.cell[data-coord="'+lib[j].x+'_'+lib[j].y+'"]');
+                            if (cell.classList.contains('unplay'+((id%2)+1))) lessLib = exLib;
+                        }
+                    }
+                }
+            }
+            tab = lib;
+            for (var i = 0; i < tab.length; i++) {
+                this.grid[tab[i].x][tab[i].y] = 0;
+            }
+            return tab;
+        },
+        exportGrid: function(grid, grp) {
+            var gridExp = JSON.stringify(grid) + '&' + JSON.stringify(grp);
+            return gridExp;
+        },
+        loadGrid: function(gridExp) {
+            var self=this;
+            var newGrid = gridExp.split('&');
+            this.grid = JSON.parse(newGrid[0]);
+            this.group = JSON.parse(newGrid[1]);
+            for (var i = 0; i < this.size; i++) {
+                for (var j = 0; j < this.size; j++) {
+                    if (isNaN(this.grid[i][j])) {
+                        var cell = document.querySelector('.cell[data-coord="'+i+'_'+j+'"]');
+                        var span = document.createElement('span');
+                        if (this.grid[i][j].id == 1) span.className = ('black');
+                        else span.className = ('white');
+                        cell.appendChild(span);
+                    }
+                }
+            }
+        },
+        load: function() {
+            var gridExp = window.prompt('Saisissez le code');
+            if (typeof gridExp == "string") {
+                this.loadGrid(gridExp);
+            }
+        },
+        save: function() {
+            window.alert(this.exportGrid(this.grid, this.group));
+            console.log(this.exportGrid(this.grid, this.group));
         }
     }
 //}) ();
     
     var gog = new GoG();
-    gog.init(1, 1);
+    gog.init(1, 1, 3);
