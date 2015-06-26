@@ -298,7 +298,7 @@ body {
 /*NAVBAR -------------*/
 #navbar {
     position: fixed;
-    bottom: 6vh;
+    bottom: 0vh;
     left: 0px;
     right: 0px;
     
